@@ -632,14 +632,16 @@ VOID GetCPUProperties (VOID)
      }
 
   else if(gCPUStructure.Vendor == CPU_VENDOR_AMD ) {
-    gCPUStructure.TSCFrequency = MultU64x32(gCPUStructure.CurrentSpeed, Mega); //MHz -> Hz
-    gCPUStructure.CPUFrequency = gCPUStructure.TSCFrequency;
     if(gCPUStructure.Extfamily == 0x00 /* K8 */) {
+      gCPUStructure.TSCFrequency = MultU64x32(gCPUStructure.CurrentSpeed, Mega); //MHz -> Hz
+      gCPUStructure.CPUFrequency = gCPUStructure.TSCFrequency;
       msr = AsmReadMsr64(K8_FIDVID_STATUS);
       gCPUStructure.MaxRatio = (UINT32)(RShiftU64((RShiftU64(msr, 16) & 0x3f), 2) + 4);
       gCPUStructure.MinRatio = (UINT32)(RShiftU64((RShiftU64(msr, 8) & 0x3f), 2) + 4);
     }
     else if(gCPUStructure.Extfamily >= 0x01 && gCPUStructure.Extfamily < 0x8 /* K10+ */) {
+      gCPUStructure.TSCFrequency = MultU64x32(gCPUStructure.CurrentSpeed, Mega); //MHz -> Hz
+      gCPUStructure.CPUFrequency = gCPUStructure.TSCFrequency;
       msr = AsmReadMsr64(K10_COFVID_STATUS);  //30BA-0063-3C00-180D
       /*      if(gCPUStructure.Extfamily == 0x01 ) { //K10
        gCPUStructure.MaxRatio = (UINT32)DivU64x32(((msr & 0x3f) + 0x10), (1 << ((RShiftU64(msr, 6) & 0x7))));
@@ -666,9 +668,15 @@ VOID GetCPUProperties (VOID)
       gCPUStructure.TSCFrequency = MultU64x32(gCPUStructure.CurrentSpeed, Mega);
       gCPUStructure.CPUFrequency = gCPUStructure.TSCFrequency;
 
-      // Zen does not provide us with max/min ratios
-      gCPUStructure.MaxRatio = 0;
-      gCPUStructure.MinRatio = 0;
+      // Get the maximum ratio
+      msr = AsmReadMsr64(K17_PSTATE_DEF + 1);
+      gCPUStructure.MaxRatio = (UINT32)DivU64x32((msr & 0xFF), (RShiftU64(msr, 8) & 0x3F))*200;
+      gCPUStructure.MaxRatio /= 1000;
+
+      // Get minimum ratio
+      msr = AsmReadMsr64(K17_PSTATE_DEF + 2);
+      gCPUStructure.MinRatio = (UINT32)DivU64x32((msr & 0xFF), (RShiftU64(msr, 8) & 0x3f))*200;
+      gCPUStructure.MinRatio /= 1000;
     }
     //    gCPUStructure.MaxRatio >>= 1;
     if (!gCPUStructure.MaxRatio) {
