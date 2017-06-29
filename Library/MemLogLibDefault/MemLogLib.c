@@ -1,5 +1,5 @@
 /** @file
-  Default instance of MemLogLib library for simple log services to memory buffer.             
+  Default instance of MemLogLib library for simple log services to memory buffer.
 **/
 
 #include <Uefi.h>
@@ -23,7 +23,7 @@ typedef struct {
   CHAR8             *Cursor;
   UINTN             BufferSize;
   MEM_LOG_CALLBACK  Callback;
-  
+
   /// Start debug ticks.
   UINT64            TscStart;
   /// Last debug ticks.
@@ -64,23 +64,23 @@ GetTiming(VOID)
 	UINT64    dTLastSec;
 	UINT64    dTLastMs;
 	UINT64    CurrentTsc;
-	
+
 	mTimingTxt[0] = '\0';
-	
+
 	if (mMemLog != NULL && mMemLog->TscFreqSec != 0) {
 		CurrentTsc = AsmReadTsc();
-    
+
 		dTStartMs = DivU64x64Remainder(MultU64x32(CurrentTsc - mMemLog->TscStart, 1000), mMemLog->TscFreqSec, NULL);
 		dTStartSec = DivU64x64Remainder(dTStartMs, 1000, &dTStartMs);
-    
+
 		dTLastMs = DivU64x64Remainder(MultU64x32(CurrentTsc - mMemLog->TscLast, 1000), mMemLog->TscFreqSec, NULL);
 		dTLastSec = DivU64x64Remainder(dTLastMs, 1000, &dTLastMs);
-    
+
 		AsciiSPrint(mTimingTxt, sizeof(mTimingTxt),
                 "%ld:%03ld  %ld:%03ld", dTStartSec, dTStartMs, dTLastSec, dTLastMs);
 		mMemLog->TscLast = CurrentTsc;
 	}
-	
+
 	return mTimingTxt;
 }
 
@@ -103,11 +103,11 @@ MemLogInit (
   UINT64          Tsc0, Tsc1;
   UINT32          AcpiTick0, AcpiTick1, AcpiTicksDelta, AcpiTicksTarget;
   CHAR8           InitError[50];
-  
+
   if (mMemLog != NULL) {
     return  EFI_SUCCESS;
   }
-  
+
   //
   // Try to use existing MEM_LOG
   //
@@ -118,7 +118,7 @@ MemLogInit (
     //
     return EFI_SUCCESS;
   }
-  
+
   //
   // Set up and publish new MEM_LOG
   //
@@ -130,7 +130,7 @@ MemLogInit (
   mMemLog->Buffer = AllocateZeroPool (MEM_LOG_INITIAL_SIZE);
   mMemLog->Cursor = mMemLog->Buffer;
   mMemLog->Callback = NULL;
-  
+
   //
   // Calibrate TSC for timings
   //
@@ -140,7 +140,6 @@ MemLogInit (
   // The ACPI PM Timer is running at a universal known frequency of 3579545Hz.
   // So, we wait 357954 clocks of the ACPI timer (100ms), and compare with how much TSC advanced.
   // This seems to provide a much more accurate calibration than using gBS->Stall(), especially on UEFI machines, and is important as this value is used later to calculate FSBFrequency.
-
   // Check if we can use the timer - we need to be on Intel ICH, get ACPI PM Timer Address from PCI, and check that it's sane
   if ((PciRead16 (PCI_ICH_LPC_ADDRESS (0))) != 0x8086) { // Intel ICH device was not found
     AsciiSPrint(InitError, sizeof(InitError), "Intel ICH device was not found.");
@@ -149,9 +148,11 @@ MemLogInit (
       TimerAddr = (PciRead16 (PCI_ICH_SMBUS_ADDRESS (R_ICH_SMBUS_ACPI_BASE)) & B_ICH_SMBUS_ACPI_BASE_BAR) + R_ACPI_PM1_TMR;
     } else { */
       AsciiSPrint(InitError, sizeof(InitError), "ACPI I/O space is not enabled.");
+      TimerAddr = 0;
    // }
   } else if ((TimerAddr = ((PciRead16 (PCI_ICH_LPC_ADDRESS (R_ICH_LPC_ACPI_BASE))) & B_ICH_LPC_ACPI_BASE_BAR) + R_ACPI_PM1_TMR) == 0) { // Timer address can't be obtained
     AsciiSPrint(InitError, sizeof(InitError), "Timer address can't be obtained.");
+    TimerAddr = 0;
   } else {
     // Check that Timer is advancing
     AcpiTick0 = IoRead32 (TimerAddr);
@@ -165,7 +166,6 @@ MemLogInit (
 
   // We prefer to use the ACPI PM Timer when possible. If it is not available we fallback to old method.
   if (TimerAddr != 0) { // ACPI PM Timer seems to be working
-
     // ACPI PM timers are usually of 24-bit length, but there are some less common cases of 32-bit length also. When the maximal number is reached, it overflows.
     // The code below can handle overflow with AcpiTicksTarget of up to 24-bit size, on both available sizes of ACPI PM Timers (24-bit and 32-bit).
 
@@ -187,13 +187,14 @@ MemLogInit (
     } while (AcpiTicksDelta < AcpiTicksTarget); // keep checking Acpi ticks until target is reached
     Tsc1 = AsmReadTsc(); // we're done, get another TSC
     mMemLog->TscFreqSec = DivU64x32(MultU64x32((Tsc1 - Tsc0), V_ACPI_TMR_FREQUENCY), AcpiTicksDelta);
-  } else { 
+  } else {
     // ACPI PM Timer is not working, fallback to old method
     Tsc0 = AsmReadTsc();
     gBS->Stall(100000); // 100ms
     Tsc1 = AsmReadTsc();
     mMemLog->TscFreqSec = MultU64x32((Tsc1 - Tsc0), 10);
   }
+
   mMemLog->TscStart = Tsc0;
   mMemLog->TscLast = Tsc0;
 
@@ -215,12 +216,12 @@ MemLogInit (
 
 /**
   Prints a log message to memory buffer.
- 
+
   @param  Timing      TRUE to prepend timing to log.
   @param  DebugMode   DebugMode will be passed to Callback function if it is set.
   @param  Format      The format string for the debug message to print.
   @param  Marker      VA_LIST with variable arguments for Format.
- 
+
 **/
 VOID
 EFIAPI
@@ -234,18 +235,18 @@ MemLogVA (
   EFI_STATUS      Status;
   UINTN           DataWritten;
   CHAR8           *LastMessage;
-  
+
   if (Format == NULL) {
     return;
   }
-  
+
   if (mMemLog == NULL) {
     Status = MemLogInit ();
     if (EFI_ERROR (Status)) {
       return;
     }
   }
-  
+
   //
   // Check if buffer can accept MEM_LOG_MAX_LINE_SIZE chars.
   // Increase buffer if not.
@@ -263,14 +264,14 @@ MemLogVA (
       mMemLog->BufferSize += MEM_LOG_INITIAL_SIZE;
       mMemLog->Cursor = mMemLog->Buffer + Offset;
     }
-  
+
   //
   // Add log to buffer
   //
   LastMessage = mMemLog->Cursor;
   if (Timing) {
     //
-    // Write timing only at the beginnign of a new line
+    // Write timing only at the beginning of a new line
     //
     if ((mMemLog->Buffer[0] == '\0') || (mMemLog->Cursor[-1] == '\n')) {
       DataWritten = AsciiSPrint(
@@ -280,7 +281,7 @@ MemLogVA (
                                 GetTiming ());
       mMemLog->Cursor += DataWritten;
     }
-    
+
   }
   DataWritten = AsciiVSPrint(
                              mMemLog->Cursor,
@@ -288,14 +289,14 @@ MemLogVA (
                              Format,
                              Marker);
   mMemLog->Cursor += DataWritten;
-  
+
   //
   // Pass this last message to callback if defined
   //
   if (mMemLog->Callback != NULL) {
     mMemLog->Callback(DebugMode, LastMessage);
   }
-  
+
   //
   // Write to standard debug device also
   //
@@ -304,15 +305,15 @@ MemLogVA (
 
 /**
   Prints a log to message memory buffer.
- 
+
   If Format is NULL, then does nothing.
- 
+
   @param  Timing      TRUE to prepend timing to log.
   @param  DebugMode   DebugMode will be passed to Callback function if it is set.
   @param  Format      The format string for the debug message to print.
   @param  ...         The variable argument list whose contents are accessed
   based on the format string specified by Format.
- 
+
  **/
 VOID
 EFIAPI
@@ -324,11 +325,11 @@ MemLog (
   )
 {
   VA_LIST           Marker;
-  
+
   if (Format == NULL) {
     return;
   }
-  
+
   VA_START (Marker, Format);
   MemLogVA (Timing, DebugMode, Format, Marker);
   VA_END (Marker);
@@ -345,14 +346,14 @@ GetMemLogBuffer (
   )
 {
   EFI_STATUS        Status;
-  
+
   if (mMemLog == NULL) {
     Status = MemLogInit ();
     if (EFI_ERROR (Status)) {
       return NULL;
     }
   }
-  
+
   return mMemLog != NULL ? mMemLog->Buffer : NULL;
 }
 
@@ -367,14 +368,14 @@ GetMemLogLen (
   )
 {
   EFI_STATUS        Status;
-  
+
   if (mMemLog == NULL) {
     Status = MemLogInit ();
     if (EFI_ERROR (Status)) {
       return 0;
     }
   }
-  
+
   return mMemLog != NULL ? mMemLog->Cursor - mMemLog->Buffer : 0;
 }
 
@@ -388,7 +389,7 @@ SetMemLogCallback (
   )
 {
   EFI_STATUS        Status;
-  
+
   if (mMemLog == NULL) {
     Status = MemLogInit ();
     if (EFI_ERROR (Status)) {
@@ -406,7 +407,7 @@ EFIAPI
 GetMemLogTscTicksPerSecond (VOID)
 {
   EFI_STATUS        Status;
-  
+
   if (mMemLog == NULL) {
     Status = MemLogInit ();
     if (EFI_ERROR (Status)) {

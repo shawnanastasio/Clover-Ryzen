@@ -409,6 +409,7 @@ Headers collection for procedures
 #define K10_COFVID_CONTROL          0xC0010062 /* switch to p-state */
 #define K10_PSTATE_STATUS           0xC0010064
 #define K10_COFVID_STATUS           0xC0010071 /* current p-state (msr >> 16) & 7 */
+#define K17_PSTATE_DEF              0xC0010064
 /* specific settings
 static void SavePState(unsigned int index, unsigned int lowMsr, unsigned int core)
 {
@@ -890,7 +891,7 @@ typedef struct {
   CHAR8                   Language[16];
   CHAR8                   BootArgs[256];
   CHAR16                  CustomUuid[40];
-  
+
   CHAR16                  *DefaultVolume;
 #if defined(MDE_CPU_IA32)
   UINT32                  align10;
@@ -905,7 +906,7 @@ typedef struct {
   UINT8                   Pad21[2];
 //Monitor
   UINT16                  VendorEDID;
-  UINT16                  ProductEDID;  
+  UINT16                  ProductEDID;
   UINT16                  BacklightLevel;
   BOOLEAN                 BacklightLevelConfig;
   BOOLEAN                 IntelBacklight;
@@ -1216,9 +1217,9 @@ typedef struct {
   CHAR16                  **DisabledAML;
   CHAR8                   **PatchDsdtLabel; //yyyy
   INPUT_ITEM              *PatchDsdtMenuItem;
-  
-  
-  // boot.efi 
+
+
+  // boot.efi
   UINT32 OptionsBits;
   UINT32 FlagsBits;
   UINT32 UIScale;

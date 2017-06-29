@@ -180,7 +180,7 @@ static EFI_STATUS StartEFILoadedImage(IN EFI_HANDLE ChildImageHandle,
   }
   //DBG("Image loaded at: %p\n", ChildLoadedImage->ImageBase);
   //PauseForKey(L"continue");
-  
+
   // close open file handles
   UninitRefitLib();
 
@@ -366,11 +366,11 @@ VOID FilterKextPatches(IN LOADER_ENTRY *Entry) //zzzz
         DBG(" ==> disabled by user\n");
         continue;
       }
-      
+
       if ((Entry->BuildVersion != NULL) && (Entry->KernelAndKextPatches->KextPatches[i].MatchBuild != NULL)) {
         Entry->KernelAndKextPatches->KextPatches[i].MenuItem.BValue = IsPatchEnabled(Entry->KernelAndKextPatches->KextPatches[i].MatchBuild, Entry->BuildVersion);
         DBG(" ==> %a\n", Entry->KernelAndKextPatches->KextPatches[i].MenuItem.BValue ? "allowed" : "not allowed");
-        continue; 
+        continue;
       }
 
       Entry->KernelAndKextPatches->KextPatches[i].MenuItem.BValue = IsPatchEnabled(Entry->KernelAndKextPatches->KextPatches[i].MatchOS, Entry->OSVersion);
@@ -400,7 +400,7 @@ VOID FilterKernelPatches(IN LOADER_ENTRY *Entry)
       if ((Entry->BuildVersion != NULL) && (Entry->KernelAndKextPatches->KernelPatches[i].MatchBuild != NULL)) {
         Entry->KernelAndKextPatches->KernelPatches[i].MenuItem.BValue = IsPatchEnabled(Entry->KernelAndKextPatches->KernelPatches[i].MatchBuild, Entry->BuildVersion);
         DBG(" ==> %a by build\n", Entry->KernelAndKextPatches->KernelPatches[i].MenuItem.BValue ? "allowed" : "not allowed");
-        continue; 
+        continue;
       }
 
       Entry->KernelAndKextPatches->KernelPatches[i].MenuItem.BValue = IsPatchEnabled(Entry->KernelAndKextPatches->KernelPatches[i].MatchOS, Entry->OSVersion);
@@ -426,13 +426,13 @@ VOID FilterBootPatches(IN LOADER_ENTRY *Entry)
         DBG(" ==> disabled by user\n");
         continue;
       }
-      
+
       if ((Entry->BuildVersion != NULL) && (Entry->KernelAndKextPatches->BootPatches[i].MatchBuild != NULL)) {
         Entry->KernelAndKextPatches->BootPatches[i].MenuItem.BValue = IsPatchEnabled(Entry->KernelAndKextPatches->BootPatches[i].MatchBuild, Entry->BuildVersion);
         DBG(" ==> %a by build\n", Entry->KernelAndKextPatches->BootPatches[i].MenuItem.BValue ? "allowed" : "not allowed");
         continue;
       }
-      
+
       Entry->KernelAndKextPatches->BootPatches[i].MenuItem.BValue = IsPatchEnabled(Entry->KernelAndKextPatches->BootPatches[i].MatchOS, Entry->OSVersion);
       DBG(" ==> %a by OS\n", Entry->KernelAndKextPatches->BootPatches[i].MenuItem.BValue ? "allowed" : "not allowed");
     }
@@ -462,7 +462,7 @@ VOID ReadSIPCfg()
     StrCatS(csrLog, SVALUE_MAX_SIZE/2, PoolPrint(L"%a%a", StrLen(csrLog) ? " | " : "", "CSR_ALLOW_DEVICE_CONFIGURATION"));
   if (csrCfg & CSR_DISABLE_BASESYSTEM_VERIFICATION)
     StrCatS(csrLog, SVALUE_MAX_SIZE/2, PoolPrint(L"%a%a", StrLen(csrLog) ? " | " : "", "CSR_DISABLE_BASESYSTEM_VERIFICATION"));
-    
+
   if (StrLen(csrLog)) {
     DBG("CSR_CFG: %s\n", csrLog);
   }
@@ -659,7 +659,7 @@ static VOID StartLoader(IN LOADER_ENTRY *Entry)
       DoHibernateWake = PrepareHibernation(Entry->Volume);
     }
     SetupDataForOSX(DoHibernateWake);
-    
+
 
     if (gDriversFlags.AptioFixLoaded &&
         !DoHibernateWake &&
@@ -743,7 +743,7 @@ static VOID StartLoader(IN LOADER_ENTRY *Entry)
       ConOutOutputString = gST->ConOut->OutputString;
       gST->ConOut->OutputString = NullConOutOutputString;
     }
-    
+
     // Initialize the boot screen
     if (EFI_ERROR(Status = InitBootScreen(Entry))) {
       if (Status != EFI_ABORTED) DBG("Failed to initialize custom boot screen: %r!\n", Status);
@@ -774,7 +774,7 @@ static VOID StartLoader(IN LOADER_ENTRY *Entry)
     }
     SetupBooterLog(!DoHibernateWake);
   }
-  
+
   DBG("Closing log\n");
   if (SavePreBootLog) {
     Status = SaveBooterLog(SelfRootDir, PREBOOT_LOG);
@@ -1499,7 +1499,7 @@ VOID SetVariablesFromNvram()
 //    DeleteNvramVariable(L"boot-args", &gEfiAppleBootGuid);
     Size = AsciiStrLen(tmpString); // some EFI implementations include '\0' in Size, and others don't, so update Size to string length
     arg = AllocatePool(Size+1);
-    
+
 /*    if (AsciiStrStr(tmpString, "nvda_drv=1")) { //found substring
       gSettings.NvidiaWeb = TRUE;
     } */
@@ -1553,7 +1553,7 @@ VOID SetVariablesFromNvram()
   if (tmpString) {
     FreePool(tmpString);
   }
-  
+
   tmpString = GetNvramVariable(L"nvda_drv", &gEfiAppleBootGuid, NULL, NULL);
   if (tmpString && AsciiStrCmp(tmpString, "1") == 0) {
     gSettings.NvidiaWeb = TRUE;
@@ -1608,7 +1608,7 @@ EFI_GUID APFSSignature       = {0xBE74FCF7, 0x0B7C, 0x49F3, { 0x91, 0x47, 0x01, 
 
 //Function for obtaining unique part id from APFS partition
 //IN DevicePath
-//Out: EFI_GUID 
+//Out: EFI_GUID
 //null if it is not APFS part
 EFI_GUID *APFSPartitionUUIDExtract(
   IN EFI_DEVICE_PATH_PROTOCOL *DevicePath
@@ -1623,12 +1623,12 @@ EFI_GUID *APFSPartitionUUIDExtract(
     if (StriCmp(GuidLEToStr((EFI_GUID *)((UINT8 *)DevicePath+0x04)),GuidLEToStr(&APFSSignature)) == 0 ) {
       return (EFI_GUID *)((UINT8 *)DevicePath+0x14);
     }
-  }         
+  }
   return NULL;
 }
 
 UINT8 *APFSContainer_Support(VOID) {
-        /* 
+        /*
          * S. Mtr 2017
          * APFS Container partition support
          * Gather System PartitionUniqueGUID
@@ -1646,7 +1646,7 @@ UINT8 *APFSContainer_Support(VOID) {
             if ((TmpUUID = APFSPartitionUUIDExtract(Volume->DevicePath)) != NULL){
               CopyMem(APFSUUIDBank+APFSUUIDBankCounter*0x10,(UINT8 *)TmpUUID,0x10);
               APFSUUIDBankCounter++;
-            }                     
+            }
         }
     return APFSUUIDBank;
 }
@@ -1658,9 +1658,9 @@ CHAR16 *RecoveryVersionPlist    = L"\\com.apple.recovery.boot\\SystemVersion.pli
 CHAR16  APFSSysPlistPath[86]    = L"\\00000000-0000-0000-0000-000000000000\\System\\Library\\CoreServices\\SystemVersion.plist";
 CHAR16  APFSServerPlistPath[86] = L"\\00000000-0000-0000-0000-000000000000\\System\\Library\\CoreServices\\ServerVersion.plist";
 CHAR16  APFSRecPlistPath[58]    = L"\\00000000-0000-0000-0000-000000000000\\SystemVersion.plist";
-  
 
-VOID SystemVersionInit(VOID){ 
+
+VOID SystemVersionInit(VOID){
   //Plists iterators
   UINTN      SysIter            = 2;
   UINTN      RecIter            = 1;
@@ -1713,7 +1713,7 @@ VOID SystemVersionInit(VOID){
   RecoveryPlists[0] = RecoveryVersionPlist;
   RecoveryPlists[1] = NULL;
   /************************************************************************/
-  //Fill Plists 
+  //Fill Plists
   for (UINTN i = 0; i < APFSUUIDBankCounter+1; i++) {
       //Store UUID from bank
       CHAR16 *CurrentUUID=GuidLEToStr((EFI_GUID *)((UINT8 *)APFSUUIDBank+i*0x10));
@@ -1999,7 +1999,7 @@ RefitMain (IN EFI_HANDLE           ImageHandle,
       !gDriversFlags.EmuVariableLoaded) {
     GetSmcKeys(FALSE);  // later we can get here SMC information
   } */
-  
+
   Status = gBS->LocateProtocol (&gEmuVariableControlProtocolGuid, NULL, (VOID**)&gEmuVariableControl);
   if (EFI_ERROR(Status)) {
     gEmuVariableControl = NULL;
@@ -2126,13 +2126,13 @@ RefitMain (IN EFI_HANDLE           ImageHandle,
       DBG("Invalid smbios.plist, not overriding config.plist!\n");
     }
   }
-  
+
   if (gFirmwareClover ||
       gDriversFlags.EmuVariableLoaded) {
     if (GlobalConfig.StrictHibernate) {
       DBG(" Don't use StrictHibernate with emulated NVRAM!\n");
     }
-    GlobalConfig.StrictHibernate = FALSE;    
+    GlobalConfig.StrictHibernate = FALSE;
   }
 
   HaveDefaultVolume = gSettings.DefaultVolume != NULL;
@@ -2161,7 +2161,7 @@ RefitMain (IN EFI_HANDLE           ImageHandle,
     MainMenu.EntryCount = 0;
     OptionMenu.EntryCount = 0;
     ScanVolumes();
-    
+
     //Check apfs driver loaded state
     //Free APFSUUIDBank
     if (APFSUUIDBank != NULL) {
@@ -2189,7 +2189,7 @@ RefitMain (IN EFI_HANDLE           ImageHandle,
     }
 
     if (!GlobalConfig.FastBoot) {
-      
+
 #ifdef CHECK_FLAGS
       CHAR16 *TmpArgs;
 #endif
@@ -2206,7 +2206,7 @@ RefitMain (IN EFI_HANDLE           ImageHandle,
 //      DBG("initial boot-args=%a\n", gSettings.BootArgs);
       //now it is a time to set RtVariables
       SetVariablesFromNvram();
-      
+
 #ifdef CHECK_FLAGS
       TmpArgs = PoolPrint(L"%a ", gSettings.BootArgs);
       DBG("after NVRAM boot-args=%a\n", gSettings.BootArgs);
@@ -2225,7 +2225,7 @@ RefitMain (IN EFI_HANDLE           ImageHandle,
       }
     }
     GetSmcKeys(TRUE);
-    
+
 
     // Add custom entries
     AddCustomEntries();
