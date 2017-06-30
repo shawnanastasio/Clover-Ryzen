@@ -121,6 +121,7 @@ VOID GetCPUProperties (VOID)
   UINT64        ExternalClock;
   UINT64        tmpU;
   UINT16        did, vid;
+  UINT16        MaxPstate, MinPstate;
   UINTN         Segment;
   UINTN         Bus;
   UINTN         Device;
@@ -638,6 +639,12 @@ VOID GetCPUProperties (VOID)
       msr = AsmReadMsr64(K8_FIDVID_STATUS);
       gCPUStructure.MaxRatio = (UINT32)(RShiftU64((RShiftU64(msr, 16) & 0x3f), 2) + 4);
       gCPUStructure.MinRatio = (UINT32)(RShiftU64((RShiftU64(msr, 8) & 0x3f), 2) + 4);
+
+      if (!gCPUStructure.MaxRatio) {
+        gCPUStructure.MaxRatio = 1; //??? to avoid zero division
+      }
+      gCPUStructure.FSBFrequency = DivU64x32(LShiftU64(gCPUStructure.TSCFrequency, 1), gCPUStructure.MaxRatio);
+      gCPUStructure.MaxRatio *= 5;
     }
     else if(gCPUStructure.Extfamily >= 0x01 && gCPUStructure.Extfamily < 0x8 /* K10+ */) {
       gCPUStructure.TSCFrequency = MultU64x32(gCPUStructure.CurrentSpeed, Mega); //MHz -> Hz
@@ -661,6 +668,11 @@ VOID GetCPUProperties (VOID)
       gCPUStructure.MinRatio = 5 * (UINT32)DivU64x32(((msr & 0x3f) + 0x08), (1 << ((RShiftU64(msr, 6) & 0x7))));
       // bred
       //     }
+      if (!gCPUStructure.MaxRatio) {
+        gCPUStructure.MaxRatio = 1; //??? to avoid zero division
+      }
+      gCPUStructure.FSBFrequency = DivU64x32(LShiftU64(gCPUStructure.TSCFrequency, 1), gCPUStructure.MaxRatio);
+      gCPUStructure.MaxRatio *= 5;
     } else /* K17 (Zen) */ {
       // Get the current operating frequency in MHz
       msr = AsmReadMsr64(K17_PSTATE_DEF);
@@ -668,22 +680,22 @@ VOID GetCPUProperties (VOID)
       gCPUStructure.TSCFrequency = MultU64x32(gCPUStructure.CurrentSpeed, Mega);
       gCPUStructure.CPUFrequency = gCPUStructure.TSCFrequency;
 
-      // Get the maximum ratio
-      msr = AsmReadMsr64(K17_PSTATE_DEF + 1);
-      gCPUStructure.MaxRatio = (UINT32)DivU64x32((msr & 0xFF), (RShiftU64(msr, 8) & 0x3F))*200;
-      gCPUStructure.MaxRatio /= 1000;
+      // Get the maximum and minimum pstates
+      msr = AsmReadMsr64(K17_PSTATE_CUR_LIM);
+      MaxPstate = (UINT16)(msr & 0x7);
+      MinPstate = (UINT16)(RShiftU64(msr, 4) & 0x7);
+
+      // Get Maximum ratio
+      msr = AsmReadMsr64(K17_PSTATE_DEF + MaxPstate);
+      gCPUStructure.MaxRatio = (UINT32)DivU64x32((msr & 0xFF), (RShiftU64(msr, 8) & 0x3F)) * 2;
 
       // Get minimum ratio
       msr = AsmReadMsr64(K17_PSTATE_DEF + 2);
-      gCPUStructure.MinRatio = (UINT32)DivU64x32((msr & 0xFF), (RShiftU64(msr, 8) & 0x3f))*200;
-      gCPUStructure.MinRatio /= 1000;
+      gCPUStructure.MinRatio = (UINT32)DivU64x32((msr & 0xFF), (RShiftU64(msr, 8) & 0x3F)) * 2;
+
+      // Get FSB Frequency
+      gCPUStructure.FSBFrequency = DivU64x32(gCPUStructure.TSCFrequency, gCPUStructure.MaxRatio);
     }
-    //    gCPUStructure.MaxRatio >>= 1;
-    if (!gCPUStructure.MaxRatio) {
-      gCPUStructure.MaxRatio = 1; //??? to avoid zero division
-    }
-    gCPUStructure.FSBFrequency = DivU64x32(LShiftU64(gCPUStructure.TSCFrequency, 1), gCPUStructure.MaxRatio);
-    gCPUStructure.MaxRatio *= 5;
   }
 
 

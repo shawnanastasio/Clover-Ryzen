@@ -2063,17 +2063,21 @@ RefitMain (IN EFI_HANDLE           ImageHandle,
     gCPUStructure.TSCFrequency = gCPUStructure.TSCCalibr;
   }
 
+  /* ??? We shouldn't need to re-set these. They were already set in cpu.c:GetCPUProperties */
   gCPUStructure.CPUFrequency = gCPUStructure.TSCFrequency;
+  /* For now, comment out the FSB Frequency reset
   gCPUStructure.FSBFrequency = DivU64x32(MultU64x32(gCPUStructure.CPUFrequency, 10),
                                          (gCPUStructure.MaxRatio == 0) ? 1 : gCPUStructure.MaxRatio);
+  */
   gCPUStructure.ExternalClock = (UINT32)DivU64x32(gCPUStructure.FSBFrequency, kilo);
   gCPUStructure.MaxSpeed = (UINT32)DivU64x32(gCPUStructure.TSCFrequency + (Mega >> 1), Mega);
 
   // Check if QPI is used
-  if (gSettings.QPI == 0) {
+  if (gSettings.QPI == 0 || gCPUStructure.Vendor == CPU_VENDOR_AMD) {
     // Not used, quad-pumped FSB; divide ExternalClock by 4
     gCPUStructure.ExternalClock = gCPUStructure.ExternalClock / 4;
   }
+
 
   if (!GlobalConfig.NoEarlyProgress && !GlobalConfig.FastBoot && GlobalConfig.Timeout>0) {
     FirstMessage = PoolPrint(L"... user settings ...");

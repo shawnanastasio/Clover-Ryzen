@@ -410,6 +410,7 @@ Headers collection for procedures
 #define K10_PSTATE_STATUS           0xC0010064
 #define K10_COFVID_STATUS           0xC0010071 /* current p-state (msr >> 16) & 7 */
 #define K17_PSTATE_DEF              0xC0010064
+#define K17_PSTATE_CUR_LIM          0xC0010061
 /* specific settings
 static void SavePState(unsigned int index, unsigned int lowMsr, unsigned int core)
 {
