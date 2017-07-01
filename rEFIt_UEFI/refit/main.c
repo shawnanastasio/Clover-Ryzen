@@ -2073,7 +2073,7 @@ RefitMain (IN EFI_HANDLE           ImageHandle,
   gCPUStructure.MaxSpeed = (UINT32)DivU64x32(gCPUStructure.TSCFrequency + (Mega >> 1), Mega);
 
   // Check if QPI is used
-  if (gSettings.QPI == 0 || gCPUStructure.Vendor == CPU_VENDOR_AMD) {
+  if (gCPUStructure.Vendor == CPU_VENDOR_INTEL && gSettings.QPI == 0) {
     // Not used, quad-pumped FSB; divide ExternalClock by 4
     gCPUStructure.ExternalClock = gCPUStructure.ExternalClock / 4;
   }
