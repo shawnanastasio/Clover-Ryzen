@@ -687,11 +687,11 @@ VOID GetCPUProperties (VOID)
 
       // Get Maximum ratio
       msr = AsmReadMsr64(K17_PSTATE_DEF + MaxPstate);
-      gCPUStructure.MaxRatio = (UINT32)DivU64x32((msr & 0xFF), (RShiftU64(msr, 8) & 0x3F)) * 2;
+      gCPUStructure.MaxRatio = (UINT32)DivU64x32((msr & 0xFF), (RShiftU64(msr, 8) & 0x3F)) * 20;
 
       // Get minimum ratio
       msr = AsmReadMsr64(K17_PSTATE_DEF + MinPstate);
-      gCPUStructure.MinRatio = (UINT32)DivU64x32((msr & 0xFF), (RShiftU64(msr, 8) & 0x3F)) * 2;
+      gCPUStructure.MinRatio = (UINT32)DivU64x32((msr & 0xFF), (RShiftU64(msr, 8) & 0x3F)) * 20;
 
       // Get FSB Frequency
       gCPUStructure.FSBFrequency = DivU64x32(gCPUStructure.TSCFrequency, gCPUStructure.MaxRatio);
